@@ -3,34 +3,40 @@ type 'a tree =
   | Node of 'a * 'a tree * 'a tree
 
 type category =
-  | V of string
-  | N of string
-  | P of string
+  | A
+  | B
+  | C
+  | X
 
-let words = [3; 1; 4; 1; 5; 9; 2; 6; 5]
-
-(* Left branching *)
-let rec combine_l tree l =
-  match l with
-  | [] -> tree
-  | x::xs -> combine_l (Node (0, tree, Node(x, Empty, Empty))) xs
+let words = [Node(A, Empty, Empty);
+             Node(B, Empty, Empty);
+             Node(C, Empty, Empty)]
 
 
-(* right branching workspaces*)
-let rec combine_r tree l =
-  let combine' x tree = match tree with
-  | Empty -> Node(x, Empty, Empty)
-  | t -> Node(0, Node(x, Empty, Empty), tree) in
-  match l with
-  | [] -> tree
-  | x::xs -> combine' x (combine_r Empty xs)
+(* Combine function *)
+let combine (a: 'a tree) (b: 'a tree): 'a tree = Node(X, a, b)
 
-(* continuation *)
-let rec combine_cont tree l (cont: 'a tree -> 'b) =
-  let combine' x tree = match tree with
-  | Empty -> Node(x, Empty, Empty)
-  | t -> Node(0, Node(x, Empty, Empty), tree) in
-  match l with
-  | [] -> cont tree
-  | x::xs -> combine_cont Empty xs (fun r -> cont (combine' x r))
+
+(* Left branching - Tail-recursive function *)
+let rec build_tree_l (list: ('a tree) list): 'a tree =
+  match list with
+  | [] -> Empty
+  | [n] -> n
+  | n1::n2::ns -> build_tree_l ((combine n1 n2)::ns)
+
+
+(* Right branching - Non-tail-recursive function *)
+let rec build_tree_r (list: ('a tree) list): 'a tree =
+  match list with
+  | [] -> Empty
+  | [n] -> n
+  | n::ns -> combine n (build_tree_r ns)
+
+
+(* Function composition - Continuations *)
+let rec build_tree_comp (list: ('a tree) list) (cont: 'a tree -> 'b): 'a tree =
+  match list with
+  | [] -> cont Empty
+  | [n] -> cont n
+  | n::ns -> build_tree_comp ns (fun r -> cont (combine n r))
  
